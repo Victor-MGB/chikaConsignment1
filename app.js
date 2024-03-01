@@ -6,6 +6,7 @@ const localStrategy = require("passport-local");
 const path = require('path')
 const cors = require("cors");
 const User = require("./model/userModel");
+const otpRoutes = require('./routes/otpAuth')
 const goldData = require("./newgold/goldData");
 require("dotenv").config();
 
@@ -55,21 +56,21 @@ passport.deserializeUser(User.deserializeUser());
 
 app.post("/register", async (req, res) => {
   try {
-
     if (!req.body.email) {
-      throw new Error("Username is required");
+      throw new Error("Email is required");
     }
 
     const user = await User.create({
       fullName: req.body.name,
       email: req.body.email,
       phoneNumber: req.body.phoneNumber,
-      address:req.body.address,
-      shipmentType:req.body.shipmentType,
-      companyName:req.body.companyName,
-      companyAddress:req.body.companyAddress,
-      companyPhoneNumber:req.body.companyPhoneNumber,
-      companyRegistrationNumber:req.body.companyRegistrationNumber
+      address: req.body.address,
+      shipmentType: req.body.shipmentType,
+      companyName: req.body.companyName,
+      companyAddress: req.body.companyAddress,
+      companyPhoneNumber: req.body.companyPhoneNumber,
+      companyRegistrationNumber: req.body.companyRegistrationNumber,
+      username: req.body.username, // Use email as the username
     });
 
     console.log("User created:", user);
@@ -87,7 +88,7 @@ app.post("/login", async (req, res) => {
     console.log("Email:", req.body.email);
     console.log("PhoneNumber:", req.body.phoneNumber);
 
-    const user = await User.findOne({ Email: req.body.email });
+    const user = await User.findOne({ email: req.body.email.toLowerCase() });
     if (user) {
       const result = req.body.phoneNumber === user.phoneNumber;
       if (result) {
@@ -112,6 +113,8 @@ app.get("/logout", function (req, res) {
     res.redirect("/");
   });
 });
+
+app.use("/authotp", otpRoutes);
 
 app.get("/getgold",(req,res)=>{
     res.json(goldData)
