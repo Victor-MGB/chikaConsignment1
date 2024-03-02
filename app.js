@@ -7,6 +7,7 @@ const path = require('path')
 const cors = require("cors");
 const fetch = require("node-fetch");
 const User = require("./model/userModel");
+const Parcel = require("./model/parcelModel");
 const otpRoutes = require('./routes/otpAuth')
 const goldData = require("./newgold/goldData");
 require("dotenv").config();
@@ -93,6 +94,50 @@ app.post("/coordinates", async (req, res) => {
   }
 });
 
+//parecel
+
+app.get('/parcels', async (req, res) => {
+  try {
+    const parcels = await Parcel.find();
+    res.json(parcels);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// Add a new parcel
+app.post('/parcels', async (req, res) => {
+  try {
+    const newParcel = req.body;
+    const parcel = new Parcel(newParcel);
+    await parcel.save();
+    res.json(parcel);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// Update the price of a parcel
+app.put('/parcels/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { price } = req.body;
+
+    const updatedParcel = await Parcel.findByIdAndUpdate(
+      id,
+      { $set: { price } },
+      { new: true }
+    );
+
+    if (updatedParcel) {
+      res.json(updatedParcel);
+    } else {
+      res.status(404).json({ error: 'Parcel not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 app.post("/register", async (req, res) => {
   try {
