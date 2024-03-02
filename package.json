@@ -17,12 +17,20 @@
     "ejs": "^3.1.9",
     "express": "^4.18.2",
     "express-session": "^1.18.0",
+    "faker": "^6.6.6",
     "mongodb": "^6.3.0",
     "mongoose": "^8.2.0",
+    "node-fetch": "^2.6.1",
+    "node-geocoder": "^4.3.0",
+    "node-gpsd": "^0.3.4",
     "nodemon": "^3.1.0",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
     "passport-local-mongoose": "^8.0.0",
+    "socket.io": "^4.7.4",
     "twilio": "^4.23.0"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^8.4.1"
   }
 }
