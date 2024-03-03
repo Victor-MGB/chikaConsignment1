@@ -124,18 +124,28 @@ app.put('/parcels/:id', async (req, res) => {
   }
 });
 
-app.post('register',(req,res) =>{
-  const {email,phonenumber} = req.body;
-  User.findOne({email:email})
-  .then(user => {
-    if(user){
-      res.json("Already exist")
-    }else{
-      User.create(req, res).then((Courier) => res.json(Courier))
-      .catch(err => res.json(err))
-    }
-  })
-})
+
+// Assuming you have an instance of Express named 'app'
+app.post('/register', (req, res) => {
+   const { email, phonenumber } = req.body;
+
+   User.findOne({ email: email })
+      .then(user => {
+         if (user) {
+            res.json("Already exist");
+         } else {
+            User.create(req.body)
+               .then(courier => res.json(courier))
+               .catch(err => res.json(err));
+         }
+      })
+      .catch(err => {
+         console.error(err);
+         res.status(500).json("Internal Server Error");
+      });
+});
+
+
 
 app.post('/login',(reg,res)=>{
   const{email,phonenumber} = req.body;
