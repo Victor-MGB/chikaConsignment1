@@ -1,17 +1,14 @@
 const mongoose = require("mongoose");
-const passportLocalMongoose = require("passport-local-mongoose");
 
 const CourierSchema = new mongoose.Schema({
   fullName: String,
-  email: { type: String, unique: true },
+  email: String,
   username: String, 
-  phoneNumber: String,
+  phonenumber: String,
   address: String,
   DateOfBirth: String,
   permanentAddress: String,
 });
-
-CourierSchema.plugin(passportLocalMongoose, { usernameField: "email" });
 
 const Courier = mongoose.model("Courier", CourierSchema);
 module.exports = Courier;
