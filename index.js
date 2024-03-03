@@ -147,23 +147,26 @@ app.post('/register', (req, res) => {
 
 
 
-app.post('/login',(reg,res)=>{
-  const{email,phonenumber} = req.body;
-  User.findOne({email:email})
-  .then(user => {
-    if(user){
-      if(user.phonenumber === phonenumber){
-        res.json("successfull");
-      }
-      else{
-        res.json("wrong phonenumber")
-      }
-    }
-    else{
-      res.json("no record")
-    }
-  })
-})
+app.post('/login', (req, res) => {
+   const { email, phonenumber } = req.body;
+   User.findOne({ email: email })
+      .then(user => {
+         if (user) {
+            if (user.phonenumber === phonenumber) {
+               res.json("successful");
+            } else {
+               res.json("wrong phonenumber");
+            }
+         } else {
+            res.json("no record");
+         }
+      })
+      .catch(err => {
+         console.error(err);
+         res.status(500).json("Internal Server Error");
+      });
+});
+
 
 app.get("/logout", function (req, res) {
   req.logout(function (err) {
