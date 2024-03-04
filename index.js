@@ -76,6 +76,9 @@ function generateFakeTrackingData() {
 function updateTrackingInfo(shipmentId) {
   const trackingData = generateFakeTrackingData();
 
+  // Add a dummy address
+  trackingData.address = "123 Main St";
+
   // Save to MongoDB
   const coordinate = new Coordinate(trackingData);
   coordinate.save();
@@ -83,6 +86,7 @@ function updateTrackingInfo(shipmentId) {
   trackingDataStore[shipmentId] = trackingData;
   console.log(`Tracking information for shipment ${shipmentId}:`, trackingData);
 }
+
 
 // Simulate updating tracking information every 10 seconds for a dynamic shipment ID
 const shipmentId = casual.uuid; // Generate a random UUID
@@ -114,8 +118,6 @@ app.get("/tracking/:shipmentId", async (req, res) => {
     res.status(500).json({ success: false, error: "Internal server error" });
   }
 });
-
-//parecel
 
 app.get('/parcels', async (req, res) => {
   try {
