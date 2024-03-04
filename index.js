@@ -94,47 +94,85 @@ app.get('/tracking/:shipmentId', async (req, res) => {
   }
 });
 
-const transporter = nodemailer.createTransport({
-  host: "",
-  port: 587,
-  secure: false, // Use `true` for port 465, `false` for all other ports
-  auth: {
-    user: process.env.USER ,
-    pass: process.env.PASSWORD,
-  },
-});
+app.post('/send-email/:subject', async (req, res) => {
+  const { to, body } = req.body;
+  const subject = req.params.subject || 'Default Subject';
 
-const publicKey = process.env.PUBLIC_KEY;
-const privateKey = process.env.PRIVATE_KEY;
-
-webPush.setVapidDetails(
-  "mailto:mgbemeosonduv@gmail.com",
-  publicKey,
-  privateKey
-);
-
-app.post("/send-email", async (req, res) => {
   try {
-    const { to, subject, body } = req.body;
-
-    // Save email to MongoDB
-    const newEmail = new Email({ to, subject, body });
-    await newEmail.save();
-
     // Send email
     await transporter.sendMail({
-      from: "mgbemeosonduv@gmail.com",
-      to,
-      subject,
-      text: body,
+      from: "mgbemenaosonduv@gmail.com",
+      to: "aztop29@gmail.com",
+      subject: "test mail",
+      text: "nodejs testing mail",
     });
 
-    res.status(200).json({ message: "Email sent successfully!" });
+    // Save to MongoDB
+    await Email.create({ to, subject, body });
+
+    res.status(200).json({ success: true, message: 'Email sent and notification saved.' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ success: false, message: 'Error sending email and saving notification.' });
   }
 });
+
+app.post('/send-push-notification', async (req, res) => {
+  const { subscription, message } = req.body;
+
+  try {
+    // Send push notification
+    await webpush.sendNotification(subscription, JSON.stringify({ title: 'Push Notification', body: message }));
+
+    // Save to MongoDB
+    await Email.create({ to: 'Push Notification', subject: 'Push Notification', body: message });
+
+    res.status(200).json({ success: true, message: 'Push notification sent and saved.' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Error sending push notification and saving notification.' });
+  }
+});
+
+// const transporter = nodemailer.createTransport({
+//   host: "Gmail",
+//   auth: {
+//     user: process.env.USER ,
+//     pass: process.env.PASSWORD,
+//   },
+// });
+
+// const publicKey = process.env.PUBLIC_KEY;
+// const privateKey = process.env.PRIVATE_KEY;
+
+// webPush.setVapidDetails(
+//   "mailto:mgbemeosonduv@gmail.com",
+//   publicKey,
+//   privateKey
+// );
+
+// app.post("/send-email", async (req, res) => {
+//   try {
+//     const { to, subject, body } = req.body;
+
+//     // Save email to MongoDB
+//     const newEmail = new Email({ to, subject, body });
+//     await newEmail.save();
+
+//     // Send email
+//     await transporter.sendMail({
+//       from: "mgbemeosonduv@gmail.com",
+//       to:"aztop29@gmail.com",
+//       subject:"hello victor",
+//       text: "text email sent"
+//     });
+
+//     res.status(200).json({ message: "Email sent successfully!" });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// });
 
 
 app.post("/subscribe", async (req, res) => {
