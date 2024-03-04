@@ -5,6 +5,9 @@ const path = require('path')
 const cors = require("cors");
 const casual = require("casual");
 const jwt = require("jsonwebtoken")
+const webPush = require("web-push");
+const nodemailer = require("nodemailer");
+const Email = require('./model/emailModel')
 const User = require("./model/userModel");
 const Parcel = require("./model/parcelModel");
 const otpRoutes = require('./routes/otpAuth')
@@ -90,6 +93,70 @@ app.get('/tracking/:shipmentId', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+const transporter = nodemailer.createTransport({
+  host: "",
+  port: 587,
+  secure: false, // Use `true` for port 465, `false` for all other ports
+  auth: {
+    user: process.env.USER ,
+    pass: process.env.PASSWORD,
+  },
+});
+
+const publicKey = process.env.PUBLIC_KEY;
+const privateKey = process.env.PRIVATE_KEY;
+
+webPush.setVapidDetails(
+  "mailto:mgbemeosonduv@gmail.com",
+  publicKey,
+  privateKey
+);
+
+app.post("/send-email", async (req, res) => {
+  try {
+    const { to, subject, body } = req.body;
+
+    // Save email to MongoDB
+    const newEmail = new Email({ to, subject, body });
+    await newEmail.save();
+
+    // Send email
+    await transporter.sendMail({
+      from: "mgbemeosonduv@gmail.com",
+      to,
+      subject,
+      text: body,
+    });
+
+    res.status(200).json({ message: "Email sent successfully!" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+
+app.post("/subscribe", async (req, res) => {
+  try {
+    const subscription = req.body;
+
+    const payload = JSON.stringify({
+      title: "Hello world",
+      body: "This is your first notification",
+    });
+
+    await webPush.sendNotification(subscription, payload);
+
+    res
+      .status(201)
+      .json({ success: true, message: "Push notification sent successfully!" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, error: "Internal Server Error" });
+  }
+});
+
 
 app.get('/parcels', async (req, res) => {
   try {

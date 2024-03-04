@@ -25,12 +25,14 @@
     "node-fetch": "^2.6.1",
     "node-geocoder": "^4.3.0",
     "node-gpsd": "^0.3.4",
+    "nodemailer": "^6.9.11",
     "nodemon": "^3.1.0",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
     "passport-local-mongoose": "^8.0.0",
     "socket.io": "^4.7.4",
-    "twilio": "^4.23.0"
+    "twilio": "^4.23.0",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@faker-js/faker": "^8.4.1"
