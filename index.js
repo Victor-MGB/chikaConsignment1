@@ -4,6 +4,7 @@ const bodyParser = require("body-parser");
 const path = require('path')
 const cors = require("cors");
 const fetch = require("node-fetch");
+const jwt = require("jsonwebtoken")
 const User = require("./model/userModel");
 const Parcel = require("./model/parcelModel");
 const otpRoutes = require('./routes/otpAuth')
@@ -124,47 +125,63 @@ app.put('/parcels/:id', async (req, res) => {
   }
 });
 
+// Registration Route
+app.post("/register", (req, res) => {
+  const { email, phonenumber } = req.body;
 
-// Assuming you have an instance of Express named 'app'
-app.post('/register', (req, res) => {
-   const { email, phonenumber } = req.body;
-
-   User.findOne({ email: email })
-      .then(user => {
-         if (user) {
-            res.json("Already exist");
-         } else {
-            User.create(req.body)
-               .then(courier => res.json(courier))
-               .catch(err => res.json(err));
-         }
-      })
-      .catch(err => {
-         console.error(err);
-         res.status(500).json("Internal Server Error");
-      });
+  User.findOne({ email: email })
+    .then((user) => {
+      if (user) {
+        res.json("Already exist");
+      } else {
+        User.create(req.body)
+          .then((newUser) => {
+            // Generate and send a JWT token upon successful registration with expiration time (e.g., 1 day)
+            const token = jwt.sign(
+              { userId: newUser._id },
+              process.env.SECRETE_KEY,
+              {
+                expiresIn: "1d",
+              }
+            );
+            res.json({ success: true, token: token });
+          })
+          .catch((err) => res.json(err));
+      }
+    })
+    .catch((err) => {
+      console.error(err);
+      res.status(500).json("Internal Server Error");
+    });
 });
 
 
+// Login Route
+app.post("/login", (req, res) => {
+  const { email, phonenumber } = req.body;
 
-app.post('/login', (req, res) => {
-   const { email, phonenumber } = req.body;
-   User.findOne({ email: email })
-      .then(user => {
-         if (user) {
-            if (user.phonenumber === phonenumber) {
-               res.json("successful");
-            } else {
-               res.json("wrong phonenumber");
-            }
-         } else {
-            res.json("no record");
-         }
-      })
-      .catch(err => {
-         console.error(err);
-         res.status(500).json("Internal Server Error");
-      });
+  User.findOne({ email: email })
+    .then((user) => {
+      if (user) {
+        if (user.phonenumber === phonenumber) {
+          // Generate and send a JWT token upon successful login with expiration time (e.g., 1 day)
+          const token = jwt.sign({ userId: user._id },process.env.SECRETE_KEY, {
+            expiresIn: "1d",
+          });
+          res.json({ success: true, token: token });
+        } else {
+          res.json({ success: false, message: "Wrong phonenumber" });
+        }
+      } else {
+        res.json({ success: false, message: "No record" });
+      }
+    })
+    .catch((err) => {
+      console.error(err);
+      res
+        .status(500)
+        .json({ success: false, message: "Internal Server Error" });
+    });
 });
 
 
