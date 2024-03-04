@@ -45,20 +45,13 @@ const coordinateSchema = new mongoose.Schema({
   latitude: { type: Number, required: true },
   longitude: { type: Number, required: true },
   status: { type: String, required: true },
-  address:{type:String, required: true},
+  address: { type: String, required: true },
 });
 
 const Coordinate = mongoose.model("Coordinate", coordinateSchema);
 
-const minLatitude = 30.0;
-const maxLatitude = 40.0;
-const minLongitude = -120.0;
-const maxLongitude = -100.0;
-
-// Create an in-memory store for tracking data
 const trackingDataStore = {};
 
-// Function to generate a random number within a given range
 function getRandomNumberInRange(min, max) {
   return Math.random() * (max - min) + min;
 }
@@ -71,8 +64,8 @@ function getRandomStatus() {
 
 // Function to generate fake tracking data
 function generateFakeTrackingData() {
-  const latitude = getRandomNumberInRange(minLatitude, maxLatitude);
-  const longitude = getRandomNumberInRange(minLongitude, maxLongitude);
+  const latitude = getRandomNumberInRange(30.0, 40.0);
+  const longitude = getRandomNumberInRange(-120.0, -100.0);
   const timestamp = casual.moment.toISOString();
   const status = getRandomStatus();
 
@@ -82,6 +75,11 @@ function generateFakeTrackingData() {
 // Function to update tracking information for a shipment
 function updateTrackingInfo(shipmentId) {
   const trackingData = generateFakeTrackingData();
+
+  // Save to MongoDB
+  const coordinate = new Coordinate(trackingData);
+  coordinate.save();
+
   trackingDataStore[shipmentId] = trackingData;
   console.log(`Tracking information for shipment ${shipmentId}:`, trackingData);
 }
@@ -93,21 +91,27 @@ setInterval(() => {
 }, 10000); // Update every 10 seconds
 
 // Define an API endpoint to retrieve tracking information
-app.get("/tracking/:shipmentId", (req, res) => {
+app.get("/tracking/:shipmentId", async (req, res) => {
   const { shipmentId } = req.params;
 
-  // Check if tracking information exists for the given shipment ID
-  if (trackingDataStore.hasOwnProperty(shipmentId)) {
-    const trackingData = trackingDataStore[shipmentId];
-    res.json({
-      success: true,
-      message: "Tracking information retrieved successfully",
-      data: trackingData,
-    });
-  } else {
-    res
-      .status(404)
-      .json({ success: false, error: "Tracking information not found" });
+  try {
+    // Retrieve tracking information from MongoDB
+    const trackingData = await Coordinate.findOne({ _id: shipmentId });
+
+    if (trackingData) {
+      res.json({
+        success: true,
+        message: "Tracking information retrieved successfully",
+        data: trackingData,
+      });
+    } else {
+      res
+        .status(404)
+        .json({ success: false, error: "Tracking information not found" });
+    }
+  } catch (error) {
+    console.error("Error retrieving tracking information from MongoDB:", error);
+    res.status(500).json({ success: false, error: "Internal server error" });
   }
 });
 
