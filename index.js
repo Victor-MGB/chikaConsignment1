@@ -73,7 +73,7 @@ function generateFakeTrackingData() {
 }
 
 // Function to update tracking information for a shipment
-function updateTrackingInfo() {
+function updateTrackingInfo(shipmentId) {
   const trackingData = generateFakeTrackingData();
 
   // Add a dummy address
@@ -81,18 +81,17 @@ function updateTrackingInfo() {
 
   // Save to MongoDB
   const coordinate = new Coordinate(trackingData);
-  coordinate.save((error, savedCoordinate) => {
-    if (error) {
-      console.error("Error saving tracking information to MongoDB:", error);
-    } else {
-      trackingDataStore[savedCoordinate._id] = trackingData;
-      console.log(`Tracking information saved for shipment ${savedCoordinate._id}:`, trackingData);
-    }
-  });
+  coordinate.save();
+
+  trackingDataStore[shipmentId] = trackingData;
+  console.log(`Tracking information for shipment ${shipmentId}:`, trackingData);
 }
 
+
+// Simulate updating tracking information every 10 seconds for a dynamic shipment ID
+const shipmentId = casual.uuid; // Generate a random UUID
 setInterval(() => {
-  updateTrackingInfo();
+  updateTrackingInfo(shipmentId);
 }, 10000); // Update every 10 seconds
 
 // Define an API endpoint to retrieve tracking information
