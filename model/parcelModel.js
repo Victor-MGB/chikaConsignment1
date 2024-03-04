@@ -8,5 +8,5 @@ const ParcelSchema = mongoose.Schema({
   price: Number,
 });
 
-const Parcel = mongoose.model("parcel", ParcelSchema);
+const Parcel = mongoose.model("parcels", ParcelSchema);
 module.exports = Parcel;

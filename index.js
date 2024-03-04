@@ -48,74 +48,46 @@ const coordinateSchema = new mongoose.Schema({
   address: { type: String, required: true },
 });
 
-const Coordinate = mongoose.model("Coordinate", coordinateSchema);
+const Coordinate = mongoose.model('Coordinate', coordinateSchema);
 
-const trackingDataStore = {};
+// Create a Mock Data Generator
+function generateFakeTrackingData(shipmentId) {
+  // Simulate movement by generating coordinates
+  const latitude = casual.latitude;
+  const longitude = casual.longitude;
 
-function getRandomNumberInRange(min, max) {
-  return Math.random() * (max - min) + min;
+  // Generate a timestamp for the current time
+  const timestamp = new Date().toISOString();
+
+  // Generate a random status for the shipment (e.g., "In transit", "Delivered")
+  const status = casual.random_element(['In transit', 'Delivered']);
+
+  // Generate a fake address
+  const address = casual.address;
+
+  return { shipmentId, timestamp, latitude, longitude, status, address };
 }
 
-// Function to get a random status from a predefined list
-function getRandomStatus() {
-  const statuses = ["In transit", "Out for delivery", "Delivered"];
-  return casual.random_element(statuses);
-}
+// Set Up a Timer or Interval (not included, you can add as needed)
 
-// Function to generate fake tracking data
-function generateFakeTrackingData() {
-  const latitude = getRandomNumberInRange(30.0, 40.0);
-  const longitude = getRandomNumberInRange(-120.0, -100.0);
-  const timestamp = casual.moment.toISOString();
-  const status = getRandomStatus();
-
-  return { timestamp, latitude, longitude, status };
-}
-
-// Function to update tracking information for a shipment
-function updateTrackingInfo(shipmentId) {
-  const trackingData = generateFakeTrackingData();
-
-  // Add a dummy address
-  trackingData.address = "123 Main St";
-
-  // Save to MongoDB
-  const coordinate = new Coordinate(trackingData);
-  coordinate.save();
-
-  trackingDataStore[shipmentId] = trackingData;
-  console.log(`Tracking information for shipment ${shipmentId}:`, trackingData);
-}
-
-
-// Simulate updating tracking information every 10 seconds for a dynamic shipment ID
-const shipmentId = casual.uuid; // Generate a random UUID
-setInterval(() => {
-  updateTrackingInfo(shipmentId);
-}, 10000); // Update every 10 seconds
-
-// Define an API endpoint to retrieve tracking information
-app.get("/tracking/:shipmentId", async (req, res) => {
-  const { shipmentId } = req.params;
+// Update Tracking Information
+app.get('/tracking/:shipmentId', async (req, res) => {
+  const shipmentId = req.params.shipmentId;
 
   try {
-    // Retrieve tracking information from MongoDB
-    const trackingData = await Coordinate.findOne({ _id: shipmentId });
+    // Fetch tracking data from the MongoDB database
+    const trackingData = await Coordinate.findOne({ shipmentId });
 
-    if (trackingData) {
-      res.json({
-        success: true,
-        message: "Tracking information retrieved successfully",
-        data: trackingData,
-      });
+    // If tracking data not found, generate fake data (for testing purposes)
+    if (!trackingData) {
+      const fakeData = generateFakeTrackingData(shipmentId);
+      res.json(fakeData);
     } else {
-      res
-        .status(404)
-        .json({ success: false, error: "Tracking information not found" });
+      res.json(trackingData);
     }
   } catch (error) {
-    console.error("Error retrieving tracking information from MongoDB:", error);
-    res.status(500).json({ success: false, error: "Internal server error" });
+    console.error('Error fetching tracking data:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -169,21 +141,36 @@ app.post("/register", (req, res) => {
   User.findOne({ email: email })
     .then((user) => {
       if (user) {
-        res.json("Already exist");
+        res.json({ success: false, message: "Email already exists" });
       } else {
         User.create(req.body)
           .then((newUser) => {
             // Generate and send a JWT token upon successful registration with expiration time (e.g., 1 day)
             const token = jwt.sign(
               { userId: newUser._id },
-              process.env.SECRETE_KEY,
+              process.env.SECRET_KEY,
               {
                 expiresIn: "1d",
               }
             );
-            res.json({ success: true, token: token });
+            res.json({
+              success: true,
+              token: token,
+              message: "Registration successful",
+            });
           })
-          .catch((err) => res.json(err));
+          .catch((err) => {
+            if (err.code === 11000) {
+              // Duplicate key violation for username
+              res.json({
+                success: false,
+                message: "Username already exists",
+              });
+            } else {
+              console.error(err);
+              res.status(500).json("Internal Server Error");
+            }
+          });
       }
     })
     .catch((err) => {
@@ -191,7 +178,6 @@ app.post("/register", (req, res) => {
       res.status(500).json("Internal Server Error");
     });
 });
-
 
 // Login Route
 app.post("/login", (req, res) => {
