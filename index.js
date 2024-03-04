@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const path = require('path')
 const cors = require("cors");
-const fetch = require("node-fetch");
+const casual = require("casual");
 const jwt = require("jsonwebtoken")
 const User = require("./model/userModel");
 const Parcel = require("./model/parcelModel");
@@ -45,38 +45,69 @@ const coordinateSchema = new mongoose.Schema({
   latitude: { type: Number, required: true },
   longitude: { type: Number, required: true },
   status: { type: String, required: true },
+  address:{type:String, required: true},
 });
 
 const Coordinate = mongoose.model("Coordinate", coordinateSchema);
 
-app.post("/coordinates", async (req, res) => {
-  try {
-    const { timestamp, latitude, longitude, status } = req.body;
+const minLatitude = 30.0;
+const maxLatitude = 40.0;
+const minLongitude = -120.0;
+const maxLongitude = -100.0;
 
-    // Use OpenCage Geocoding API to get the address based on coordinates
-    const apiKey = "8445ebdd3f804923af05ca3a9aeb0984";
-    const response = await fetch(
-      `https://api.opencagedata.com/geocode/v1/json?key=${apiKey}&q=${latitude}+${longitude}&pretty=1`
-    );
-    const data = await response.json();
+// Create an in-memory store for tracking data
+const trackingDataStore = {};
 
-    if (data.results && data.results.length > 0) {
-      const address = data.results[0].formatted;
-      const newCoordinate = new Coordinate({
-        timestamp,
-        latitude,
-        longitude,
-        status,
-        address,
-      });
-      await newCoordinate.save();
-      res.json(newCoordinate);
-    } else {
-      res.status(404).json({ error: "Location not found" });
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal Server Error" });
+// Function to generate a random number within a given range
+function getRandomNumberInRange(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
+// Function to get a random status from a predefined list
+function getRandomStatus() {
+  const statuses = ["In transit", "Out for delivery", "Delivered"];
+  return casual.random_element(statuses);
+}
+
+// Function to generate fake tracking data
+function generateFakeTrackingData() {
+  const latitude = getRandomNumberInRange(minLatitude, maxLatitude);
+  const longitude = getRandomNumberInRange(minLongitude, maxLongitude);
+  const timestamp = casual.moment.toISOString();
+  const status = getRandomStatus();
+
+  return { timestamp, latitude, longitude, status };
+}
+
+// Function to update tracking information for a shipment
+function updateTrackingInfo(shipmentId) {
+  const trackingData = generateFakeTrackingData();
+  trackingDataStore[shipmentId] = trackingData;
+  console.log(`Tracking information for shipment ${shipmentId}:`, trackingData);
+}
+
+// Simulate updating tracking information every 10 seconds for a dynamic shipment ID
+const shipmentId = casual.uuid; // Generate a random UUID
+setInterval(() => {
+  updateTrackingInfo(shipmentId);
+}, 10000); // Update every 10 seconds
+
+// Define an API endpoint to retrieve tracking information
+app.get("/tracking/:shipmentId", (req, res) => {
+  const { shipmentId } = req.params;
+
+  // Check if tracking information exists for the given shipment ID
+  if (trackingDataStore.hasOwnProperty(shipmentId)) {
+    const trackingData = trackingDataStore[shipmentId];
+    res.json({
+      success: true,
+      message: "Tracking information retrieved successfully",
+      data: trackingData,
+    });
+  } else {
+    res
+      .status(404)
+      .json({ success: false, error: "Tracking information not found" });
   }
 });
 
