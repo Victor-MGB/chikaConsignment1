@@ -1,25 +1,24 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
-const path = require("path");
+const path = require('path')
 const cors = require("cors");
 const casual = require("casual");
-const jwt = require("jsonwebtoken");
-const Coordinate = require("./model/cordinate");
+const jwt = require("jsonwebtoken")
+const Coordinate = require("./model/cordinate")
 const User = require("./model/userModel");
 const Parcel = require("./model/parcelModel");
-const otpRoutes = require("./routes/otpAuth");
+const otpRoutes = require('./routes/otpAuth')
 const goldData = require("./newgold/goldData");
 require("dotenv").config();
 
 const app = express();
 
+
 app.use(cors()); // Enable CORS
 
-app.use(
-  "/goldcollections",
-  express.static(path.join(__dirname, "goldcollections"))
-);
+app.use("/goldcollections",express.static(path.join(__dirname,"goldcollections")))
+
 
 mongoose.connect(process.env.DB_CONNECTION_STRING, {
   useNewUrlParser: true,
@@ -40,77 +39,72 @@ const PORT = process.env.PORT || 4000;
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.post("/store-coordinate", async (req, res) => {
+
+app.post('/store-coordinate', async (req, res) => {
   try {
     const { latitude, longitude } = req.body;
-    console.log(req.body);
+    console.log(req.body)
     const newCoordinate = new Coordinate({ latitude, longitude });
     await newCoordinate.save();
 
     res.status(201).json({
       success: true,
-      message: "Coordinate stored successfully.",
-      data: {
-        /* additional data if needed */
-      },
+      message: 'Coordinate stored successfully.',
+      data: { /* additional data if needed */ },
     });
-
-    res.send(req.body);
+    
   } catch (error) {
     console.error(error);
     res.status(500).json({
       success: false,
-      message: "Internal Server Error",
-      error: {
-        /* additional error details if needed */
-      },
+      message: 'Internal Server Error',
+      error: { /* additional error details if needed */ },
     });
   }
 });
 
-app.get("/get-coordinates", async (req, res) => {
+app.get('/get-coordinates', async (req, res) => {
   try {
     const coordinates = await Coordinate.find();
     res.status(200).json({
       success: true,
-      message: "Coordinates retrieved successfully.",
+      message: 'Coordinates retrieved successfully.',
       data: { coordinates },
     });
   } catch (error) {
     console.error(error);
     res.status(500).json({
       success: false,
-      message: "Internal Server Error",
-      error: {
-        /* additional error details if needed */
-      },
+      message: 'Internal Server Error',
+      error: { /* additional error details if needed */ },
     });
   }
 });
 
-app.get("/parcels", async (req, res) => {
+
+app.get('/parcels', async (req, res) => {
   try {
     const parcels = await Parcel.find();
     res.json(parcels);
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
 // Add a new parcel
-app.post("/parcels", async (req, res) => {
+app.post('/parcels', async (req, res) => {
   try {
     const newParcel = req.body;
     const parcel = new Parcel(newParcel);
     await parcel.save();
     res.json(parcel);
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
 // Update the price of a parcel
-app.put("/parcels/:id", async (req, res) => {
+app.put('/parcels/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { price } = req.body;
@@ -124,10 +118,10 @@ app.put("/parcels/:id", async (req, res) => {
     if (updatedParcel) {
       res.json(updatedParcel);
     } else {
-      res.status(404).json({ error: "Parcel not found" });
+      res.status(404).json({ error: 'Parcel not found' });
     }
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
@@ -185,13 +179,9 @@ app.post("/login", (req, res) => {
       if (user) {
         if (user.phonenumber === phonenumber) {
           // Generate and send a JWT token upon successful login with expiration time (e.g., 1 day)
-          const token = jwt.sign(
-            { userId: user._id },
-            process.env.SECRETE_KEY,
-            {
-              expiresIn: "1d",
-            }
-          );
+          const token = jwt.sign({ userId: user._id },process.env.SECRETE_KEY, {
+            expiresIn: "1d",
+          });
           res.json({ success: true, token: token });
         } else {
           res.json({ success: false, message: "Wrong phonenumber" });
@@ -208,6 +198,7 @@ app.post("/login", (req, res) => {
     });
 });
 
+
 app.get("/logout", function (req, res) {
   req.logout(function (err) {
     if (err) {
@@ -219,9 +210,9 @@ app.get("/logout", function (req, res) {
 
 app.use("/authotp", otpRoutes);
 
-app.get("/getgold", (req, res) => {
-  res.json(goldData);
-});
+app.get("/getgold",(req,res)=>{
+    res.json(goldData)
+})
 
 function isLoggedIn(req, res, next) {
   if (req.isAuthenticated()) return next();
@@ -231,3 +222,4 @@ function isLoggedIn(req, res, next) {
 app.listen(PORT, () => {
   console.log(`server is running on port ${PORT}`);
 });
+
