@@ -80,59 +80,6 @@ app.get('/get-coordinates', async (req, res) => {
 });
 
 
-
-const coordinateSchema = new mongoose.Schema({
-  timestamp: { type: String, required: true },
-  latitude: { type: Number, required: true },
-  longitude: { type: Number, required: true },
-  status: { type: String, required: true },
-  address: { type: String, required: true },
-});
-
-const Coordinate = mongoose.model('Coordinate', coordinateSchema);
-
-// Create a Mock Data Generator
-function generateFakeTrackingData(shipmentId) {
-  // Simulate movement by generating coordinates
-  const latitude = casual.latitude;
-  const longitude = casual.longitude;
-
-  // Generate a timestamp for the current time
-  const timestamp = new Date().toISOString();
-
-  // Generate a random status for the shipment (e.g., "In transit", "Delivered")
-  const status = casual.random_element(['In transit', 'Delivered']);
-
-  // Generate a fake address
-  const address = casual.address;
-
-  return { shipmentId, timestamp, latitude, longitude, status, address };
-}
-
-// Set Up a Timer or Interval (not included, you can add as needed)
-
-// Update Tracking Information
-app.get('/tracking/:shipmentId', async (req, res) => {
-  const shipmentId = req.params.shipmentId;
-
-  try {
-    // Fetch tracking data from the MongoDB database
-    const trackingData = await Coordinate.findOne({ shipmentId });
-
-    // If tracking data not found, generate fake data (for testing purposes)
-    if (!trackingData) {
-      const fakeData = generateFakeTrackingData(shipmentId);
-      res.json(fakeData);
-    } else {
-      res.json(trackingData);
-    }
-  } catch (error) {
-    console.error('Error fetching tracking data:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
-
-
 app.get('/parcels', async (req, res) => {
   try {
     const parcels = await Parcel.find();
