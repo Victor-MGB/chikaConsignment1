@@ -5,6 +5,8 @@ const path = require('path')
 const cors = require("cors");
 const casual = require("casual");
 const jwt = require("jsonwebtoken")
+const nodemailer = require("nodemailer")
+const Email = require("./model/emailModel")
 const Coordinate = require("./model/cordinate")
 const User = require("./model/userModel");
 const Parcel = require("./model/parcelModel");
@@ -77,6 +79,52 @@ app.get('/get-coordinates', async (req, res) => {
       success: false,
       message: 'Internal Server Error',
       error: { /* additional error details if needed */ },
+    });
+  }
+});
+
+//nodemailer function
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: "mgbemenaosonduv@gmail.com",
+    pass: "09077955363",
+  },
+});
+
+app.post("/send-email", async (req, res) => {
+  try {
+    // Extract data from the request body
+    const { title, message, email } = req.body;
+
+    // Create a new Email object
+    const newEmail = new Email({ title, message, email });
+
+    // Save the email to MongoDB
+    await newEmail.save();
+
+    // Send email using nodemailer
+    const mailDetails = {
+      from: "mgbemenaosonduv@gmail.com",
+      to: email,
+      subject: title || "Default Subject",
+      text: message,
+    };
+
+    await transporter.sendMail(mailDetails);
+
+    // Respond with a success message
+    res.status(201).json({
+      success: true,
+      message: "Email sent and saved successfully.",
+      data: { newEmail },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Error sending email and saving to MongoDB.",
+      error: error.message,
     });
   }
 });
