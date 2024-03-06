@@ -87,8 +87,8 @@ app.get('/get-coordinates', async (req, res) => {
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: "mgbemenaosonduv@gmail.com",
-    pass: "09077955363",
+    user: process.env.USER,
+    pass: process.env.PASSWORD,
   },
 });
 
