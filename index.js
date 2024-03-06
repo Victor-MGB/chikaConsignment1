@@ -83,24 +83,56 @@ app.get('/get-coordinates', async (req, res) => {
   }
 });
 
-//nodemailer function
+// let mailTransporter = nodemailer.createTransport({
+//   host: "smtp.gmail.com",
+//   port: 587,
+//   secure: false, // Use `true` for port 465, `false` for other ports
+//   auth: {
+//     user: "ugochukwuj088@gmail.com",
+//     pass: "777645dg",
+//   },
+// });
+
+// let details = {
+//   from: "ugochukwuj088@gmail.com",
+//   to: "mgbemenaosonduv@gmail.com",
+//   subject: "testing our nodemailer",
+//   text: "testing our first sender",
+// };
+
+// mailTransporter.sendMail(details, (err) => {
+//   if (err) {
+//     console.log("it has an error", err);
+//   } else {
+//     console.log("email has sent");
+//   }
+// });
+
+
 const transporter = nodemailer.createTransport({
   service: "gmail",
+  port: 587,
+  secure: false,
   auth: {
-    user: process.env.USER,
-    pass: process.env.PASSWORD,
+    user: "ugochukwuj088@gmail.com",
+    pass: "777645dg",
   },
 });
 
 app.post("/send-email", async (req, res) => {
   try {
-    // Extract data from the request body
     const { title, message, email } = req.body;
 
-    // Create a new Email object
-    const newEmail = new Email({ title, message, email });
+    // Validate if required fields are present in the request
+    if (!title || !message || !email) {
+      return res.status(400).json({
+        success: false,
+        message: "Title, message, and email are required fields.",
+      });
+    }
 
-    // Save the email to MongoDB
+    // Save the email details to MongoDB using the Email model
+    const newEmail = new Email({ title, message, email });
     await newEmail.save();
 
     // Send email using nodemailer
@@ -110,10 +142,8 @@ app.post("/send-email", async (req, res) => {
       subject: title || "Default Subject",
       text: message,
     };
-
     await transporter.sendMail(mailDetails);
 
-    // Respond with a success message
     res.status(201).json({
       success: true,
       message: "Email sent and saved successfully.",
@@ -124,20 +154,20 @@ app.post("/send-email", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Error sending email and saving to MongoDB.",
-      error: error.message,
+      error: { message: error.message },
     });
   }
 });
 
 
-app.get('/parcels', async (req, res) => {
-  try {
-    const parcels = await Parcel.find();
-    res.json(parcels);
-  } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
+  app.get("/parcels", async (req, res) => {
+    try {
+      const parcels = await Parcel.find();
+      res.json(parcels);
+    } catch (error) {
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
 
 // Add a new parcel
 app.post('/parcels', async (req, res) => {
