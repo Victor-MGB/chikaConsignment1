@@ -42,9 +42,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.post('/store-coordinate', async (req, res) => {
   try {
-    const { latitude, longitude } = req.body;
+    const { lat, lon } = req.body;
     console.log(req.body)
-    const newCoordinate = new Coordinate({ latitude, longitude });
+    const newCoordinate = new Coordinate({ lat, lon });
     await newCoordinate.save();
 
     res.status(201).json({

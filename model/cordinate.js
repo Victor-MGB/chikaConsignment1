@@ -1,8 +1,8 @@
 const mongoose = require("mongoose");
 
 const coordinate = new mongoose.Schema({
-  latitude: Number,
-  longitude: Number,
+  lat: Number,
+  lon: Number,
 });
 
 const Coordinate = mongoose.model("coordinate",coordinate);
