@@ -144,13 +144,15 @@ app.post("/send-email", async (req, res) => {
     };
     await transporter.sendMail(mailDetails);
 
+    console.log("Email sent and saved successfully:", newEmail);
+
     res.status(201).json({
       success: true,
       message: "Email sent and saved successfully.",
       data: { newEmail },
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error sending email and saving to MongoDB:", error);
     res.status(500).json({
       success: false,
       message: "Error sending email and saving to MongoDB.",
@@ -158,6 +160,7 @@ app.post("/send-email", async (req, res) => {
     });
   }
 });
+
 
 
   app.get("/parcels", async (req, res) => {
